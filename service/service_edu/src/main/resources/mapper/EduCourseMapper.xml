@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.java.eduservice.mapper.EduCourseMapper">
+
+    <!--发布课程确认信息-->
+    <select id="getPublishCourseInfo" parameterType="java.lang.String" resultType="java.util.Map">
+        SELECT ec.id,
+               ec.title,
+               ec.price,
+               ec.lesson_num AS lessonNum,
+               ec.cover,
+               et.name       AS teacherName,
+               es1.title     AS subjectLevelOne,
+               es2.title     AS subjwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwectLevelTwo
+        FROM edu_course ec
+                 LEFT OUTER JOIN edu_course_description ecd ON ec.id = ecd.id
+                 LEFT OUTER JOIN edu_teacher et ON ec.teacher_id = et.id
+                 LEFT OUTER JOIN edu_subject es1 ON ec.subject_parent_id = es1.id
+                 LEFT OUTER JOIN edu_subject es2 ON ec.subject_id = es2.id
+        WHERE ec.id = #{courseId}
+    </select>
+
+    <!--列表显示页面，条件查询带分页-->
+    <select id="getCoursePageList" parameterType="com.java.eduservice.entity.vo.CoursePageVo"
+            resultType="com.java.eduservice.entity.EduCourse">
+        select * from edu_course where 1=1
+        <if test="column != null and column!=''">
+            and ${column} like concat('%',#{value},'%')
+        </if>
+        <if test="status != null and status!=''">
+            and status=#{status}
+        </if>
+        and is_deleted='0'
+        LIMIT #{page},#{limit}
+    </select>
+
+
+    <!--删除课程（修改字段为已删除）-->
+    <update id="updateIsDelete" parameterType="java.lang.String">
+        UPDATE edu_course
+        SET is_deleted=1
+        WHERE id = #{courseId}
+          AND is_deleted = 0
+    </update>
+
+
+    <!--    //1 条件查询带分页查询课程-->
+    <select id="getCourseFrontList" resultType="java.util.Map">
+        select * from edu_course where 1=1
+        <if test="courseFrontVo.subjectParentId !=null and courseFrontVo.subjectParentId !='' ">
+            and subject_parent_id=#{courseFrontVo.subjectParentId}
+        </if>
+
+        <if test="courseFrontVo.subjectId !=null and courseFrontVo.subjectId !=''">
+            and subject_id=#{courseFrontVo.subjectId}
+        </if>
+
+        <if test="courseFrontVo.buyCountSort !=null and courseFrontVo.buyCountSort !=''">
+            ORDER BY buy_count DESC
+        </if>
+
+        <if test="courseFrontVo.gmtCreateSort !=null and courseFrontVo.gmtCreateSort !=''">
+            ORDER BY gmt_create DESC
+        </if>
+
+        <if test="courseFrontVo.priceSort !=null and courseFrontVo.priceSort !=''">
+            ORDER BY lesson_num DESC
+        </if>
+
+        <if test="courseFrontVo.title !=null and courseFrontVo.title !=''">
+            and title like concat('%',#{courseFrontVo.title},'%')
+        </if>
+
+    </select>
+
+    <!--sql语句：根据课程id查询课程基本信息-->
+    <select id="getBaseCourseInfo" resultType="com.java.eduservice.entity.frontvo.CourseWebVo">
+        SELECT ec.id,ec.title,ec.price,ec.lesson_num AS lessonNum,ec.cover,
+               ec.buy_count AS buyCount,ec.view_count AS viewCount,
+               ecd.description,
+               et.id AS teacherId,et.name AS teacherName,et.intro,et.avatar,
+               es1.id AS subjectLevelOneId,es1.title AS subjectLevelOne,
+               es2.id AS subjectLevelTwoId,es2.title AS subjectLevelTwo
+        FROM edu_course ec LEFT OUTER JOIN edu_course_description ecd ON ec.id=ecd.id
+                           LEFT OUTER JOIN edu_teacher et ON ec.teacher_id=et.id
+                           LEFT OUTER JOIN edu_subject es1 ON ec.subject_parent_id=es1.id
+                           LEFT OUTER JOIN edu_subject es2 ON ec.subject_id=es2.id
+        WHERE ec.id=#{courseId}
+    </select>
+
+</mapper>
